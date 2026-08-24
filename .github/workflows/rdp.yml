@@ -10,14 +10,37 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Install & Setup Ngrok
+      - name: Install and Run Ngrok
+        shell: powershell
         run: |
           choco install ngrok -y
           ngrok config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
-          Start-Process ngrok -ArgumentList "tcp 3389"
+          
+          # Start ngrok process and redirect output
+          $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+          $processInfo.FileName = "ngrok"
+          $processInfo.Arguments = "tcp 3389 --log=stdout"
+          $processInfo.RedirectStandardOutput = $true
+          $processInfo.UseShellExecute = $false
+          $process = New-Object System.Diagnostics.Process
+          $process.StartInfo = $processInfo
+          $process.Start() | Out-Null
+          
           Start-Sleep -Seconds 15
-          $tunnels = (Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels).tunnels
-          $rdp = $tunnels[0].public_url -replace "tcp://", ""
+          
+          # Fetch public URL with retry loop
+          $attempts = 0
+          $rdp = ""
+          while ($attempts -lt 5 -and -not $rdp) {
+            try {
+              $response = Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels
+              $rdp = $response.tunnels[0].public_url -replace "tcp://", ""
+            } catch {
+              Start-Sleep -Seconds 3
+              $attempts++
+            }
+          }
+          
           Write-Host ""
           Write-Host "==========================================" -ForegroundColor Green
           Write-Host "RDP Address : $rdp" -ForegroundColor Yellow
@@ -25,5 +48,6 @@ jobs:
           Write-Host "Password    : MyPassword@123" -ForegroundColor Cyan
           Write-Host "==========================================" -ForegroundColor Green
           Write-Host ""
-      - name: Keep Alive
+      - name: Keep Alive (6 Hours)
+        shell: powershell
         run: Start-Sleep -Seconds 21600
