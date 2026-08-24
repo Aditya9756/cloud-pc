@@ -10,27 +10,24 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Install Node.js and LocalTunnel
-        run: |
-          npm install -g localtunnel
-      - name: Start RDP Tunnel
+      - name: Start TCP Tunnel
         shell: powershell
         run: |
-          Write-Host "Starting LocalTunnel for RDP (Port 3389)..." -ForegroundColor Cyan
-          Start-Process -FilePath "lt" -ArgumentList "--port 3389"
-          Start-Sleep -Seconds 8
-          
-          # LocalTunnel public URL fetch karne ke liye
-          try {
-            $response = Invoke-RestMethod -Uri "https://loca.lt/mytunnelpassword"
+          ssh -o StrictHostKeyChecking=no -R 0:localhost:3389 a.pinggy.io > pinggy.log 2>&1 &
+          Start-Sleep -Seconds 10
+          $content = Get-Content pinggy.log -Raw
+          $match = [regex]::Match($content, 'tcp://[a-zA-Z0-9\.\-]+:[0-9]+')
+          if ($match.Success) {
+            $addr = $match.Value -replace 'tcp://', ''
+            Write-Host ""
             Write-Host "==========================================" -ForegroundColor Green
-            Write-Host "Your LocalTunnel IP/Domain (Use in RD Client):" -ForegroundColor Yellow
-            Write-Host $response -ForegroundColor Cyan
-            Write-Host "Username : runneradmin" -ForegroundColor Green
-            Write-Host "Password : MyPassword@123" -ForegroundColor Green
+            Write-Host "RDP Address : $addr" -ForegroundColor Yellow
+            Write-Host "Username    : runneradmin" -ForegroundColor Cyan
+            Write-Host "Password    : MyPassword@123" -ForegroundColor Cyan
             Write-Host "==========================================" -ForegroundColor Green
-          } catch {
-            Write-Host "Tunnel started. Check terminal logs above for URL." -ForegroundColor Yellow
+            Write-Host ""
+          } else {
+            Get-Content pinggy.log
           }
       - name: Keep Alive (6 Hours)
         run: Start-Sleep -Seconds 21600
