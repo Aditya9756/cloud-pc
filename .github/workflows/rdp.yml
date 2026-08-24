@@ -10,23 +10,20 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Setup and Launch Ngrok
-        shell: powershell
+      - name: Install & Setup Ngrok
         run: |
-          Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive ngrok.zip -Force
-          .\ngrok.exe config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
-          Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389"
-          Start-Sleep -Seconds 12
-          $tunnel = (Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels").tunnels[0]
-          $ip = $tunnel.public_url -replace "tcp://", ""
+          choco install ngrok -y
+          ngrok config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
+          Start-Process ngrok -ArgumentList "tcp 3389"
+          Start-Sleep -Seconds 15
+          $tunnels = (Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels).tunnels
+          $rdp = $tunnels[0].public_url -replace "tcp://", ""
           Write-Host ""
           Write-Host "==========================================" -ForegroundColor Green
-          Write-Host "RDP Address : $ip" -ForegroundColor Yellow
+          Write-Host "RDP Address : $rdp" -ForegroundColor Yellow
           Write-Host "Username    : runneradmin" -ForegroundColor Cyan
           Write-Host "Password    : MyPassword@123" -ForegroundColor Cyan
           Write-Host "==========================================" -ForegroundColor Green
           Write-Host ""
       - name: Keep Alive
-        shell: powershell
         run: Start-Sleep -Seconds 21600
