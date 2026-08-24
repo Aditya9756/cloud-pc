@@ -10,18 +10,27 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Download Ngrok
-        shell: cmd
+      - name: Install Node.js and LocalTunnel
         run: |
-          curl -sLo ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip
-          tar -xf ngrok.zip
-          ngrok.exe config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
-      - name: Run Ngrok RDP
-        shell: cmd
+          npm install -g localtunnel
+      - name: Start RDP Tunnel
+        shell: powershell
         run: |
-          echo ==========================================
-          echo Username : runneradmin
-          echo Password : MyPassword@123
-          echo ==========================================
-          echo Niche url=tcp://... wali line me RDP address milega:
-          ngrok.exe tcp 3389 --log=stdout
+          Write-Host "Starting LocalTunnel for RDP (Port 3389)..." -ForegroundColor Cyan
+          Start-Process -FilePath "lt" -ArgumentList "--port 3389"
+          Start-Sleep -Seconds 8
+          
+          # LocalTunnel public URL fetch karne ke liye
+          try {
+            $response = Invoke-RestMethod -Uri "https://loca.lt/mytunnelpassword"
+            Write-Host "==========================================" -ForegroundColor Green
+            Write-Host "Your LocalTunnel IP/Domain (Use in RD Client):" -ForegroundColor Yellow
+            Write-Host $response -ForegroundColor Cyan
+            Write-Host "Username : runneradmin" -ForegroundColor Green
+            Write-Host "Password : MyPassword@123" -ForegroundColor Green
+            Write-Host "==========================================" -ForegroundColor Green
+          } catch {
+            Write-Host "Tunnel started. Check terminal logs above for URL." -ForegroundColor Yellow
+          }
+      - name: Keep Alive (6 Hours)
+        run: Start-Sleep -Seconds 21600
