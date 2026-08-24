@@ -14,8 +14,7 @@ jobs:
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          net user runneradmin MyPassword@123 /add
-          net localgroup administrators runneradmin /add
+          net user runneradmin MyPassword@123
       - name: Start Tunnel
         run: |
           Start-Process powershell -ArgumentList ".\ngrok\ngrok.exe tcp 3389"
