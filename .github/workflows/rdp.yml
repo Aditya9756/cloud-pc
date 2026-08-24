@@ -10,24 +10,23 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Download and Setup Ngrok
-        shell: cmd
+      - name: Setup and Launch Ngrok
+        shell: powershell
         run: |
-          curl -sLo ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip
-          tar -xf ngrok.zip
-          ngrok.exe config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
-      - name: Start Ngrok Tunnel
-        shell: cmd
-        run: |
-          start ngrok.exe tcp 3389 --log=stdout
-          timeout /t 10
-          curl -s http://127.0.0.1:4040/api/tunnels
+          Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+          Expand-Archive ngrok.zip -Force
+          .\ngrok.exe config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
+          Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389"
+          Start-Sleep -Seconds 12
+          $tunnel = (Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels").tunnels[0]
+          $ip = $tunnel.public_url -replace "tcp://", ""
+          Write-Host ""
+          Write-Host "==========================================" -ForegroundColor Green
+          Write-Host "RDP Address : $ip" -ForegroundColor Yellow
+          Write-Host "Username    : runneradmin" -ForegroundColor Cyan
+          Write-Host "Password    : MyPassword@123" -ForegroundColor Cyan
+          Write-Host "==========================================" -ForegroundColor Green
+          Write-Host ""
       - name: Keep Alive
-        shell: cmd
-        run: |
-          echo =======================================================
-          echo RDP Setup Live Hai! Upar wale step ke output me link dekhein.
-          echo User: runneradmin
-          echo Password: MyPassword@123
-          echo =======================================================
-          ping 127.0.0.1 -n 21600 > nul
+        shell: powershell
+        run: Start-Sleep -Seconds 21600
