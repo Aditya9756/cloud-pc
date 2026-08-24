@@ -17,13 +17,14 @@ jobs:
           net user runneradmin MyPassword@123
       - name: Start Tunnel
         run: |
-          Start-Process powershell -ArgumentList ".\ngrok\ngrok.exe tcp 3389"
-          Start-Sleep -Seconds 10
+          Start-Process -FilePath ".\ngrok\ngrok.exe" -ArgumentList "tcp 3389 --region in"
+          Start-Sleep -Seconds 15
           $tunnels = (Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels).tunnels
-          Write-Output "================================"
-          Write-Output "RDP Address: $($tunnels[0].public_url -replace 'tcp://', '')"
-          Write-Output "User: runneradmin"
-          Write-Output "Password: MyPassword@123"
-          Write-Output "================================"
+          $rdpAddress = $tunnels[0].public_url -replace 'tcp://', ''
+          Write-Host "==========================================" -ForegroundColor Green
+          Write-Host "RDP Address  : $rdpAddress" -ForegroundColor Yellow
+          Write-Host "User         : runneradmin" -ForegroundColor Cyan
+          Write-Host "Password     : MyPassword@123" -ForegroundColor Cyan
+          Write-Host "==========================================" -ForegroundColor Green
       - name: Keep Alive (6 Hours)
         run: Start-Sleep -Seconds 21600
