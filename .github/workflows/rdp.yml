@@ -5,8 +5,29 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Setup Windows RDP
-        uses: sourabhv/arc-runner-rdp@v1
-        with:
-          ngrok_token: "3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4"
-          password: "MyPassword@123"
+      - name: Enable Remote Desktop
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          net user runneradmin MyPassword@123
+      - name: Download and Setup Ngrok
+        shell: cmd
+        run: |
+          curl -sLo ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip
+          tar -xf ngrok.zip
+          ngrok.exe config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
+      - name: Start Ngrok Tunnel
+        shell: cmd
+        run: |
+          start ngrok.exe tcp 3389 --log=stdout
+          timeout /t 10
+          curl -s http://127.0.0.1:4040/api/tunnels
+      - name: Keep Alive
+        shell: cmd
+        run: |
+          echo =======================================================
+          echo RDP Setup Live Hai! Upar wale step ke output me link dekhein.
+          echo User: runneradmin
+          echo Password: MyPassword@123
+          echo =======================================================
+          ping 127.0.0.1 -n 21600 > nul
