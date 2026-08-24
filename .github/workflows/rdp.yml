@@ -10,24 +10,12 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Start TCP Tunnel
-        shell: powershell
+      - name: Start Pinggy RDP Tunnel
+        shell: cmd
         run: |
-          ssh -o StrictHostKeyChecking=no -R 0:localhost:3389 a.pinggy.io > pinggy.log 2>&1 &
-          Start-Sleep -Seconds 10
-          $content = Get-Content pinggy.log -Raw
-          $match = [regex]::Match($content, 'tcp://[a-zA-Z0-9\.\-]+:[0-9]+')
-          if ($match.Success) {
-            $addr = $match.Value -replace 'tcp://', ''
-            Write-Host ""
-            Write-Host "==========================================" -ForegroundColor Green
-            Write-Host "RDP Address : $addr" -ForegroundColor Yellow
-            Write-Host "Username    : runneradmin" -ForegroundColor Cyan
-            Write-Host "Password    : MyPassword@123" -ForegroundColor Cyan
-            Write-Host "==========================================" -ForegroundColor Green
-            Write-Host ""
-          } else {
-            Get-Content pinggy.log
-          }
-      - name: Keep Alive (6 Hours)
-        run: Start-Sleep -Seconds 21600
+          echo ==========================================
+          echo Username : runneradmin
+          echo Password : MyPassword@123
+          echo ==========================================
+          echo Niche logs me "tcp://..." address check karein:
+          ssh -o StrictHostKeyChecking=no -p 443 -R0:localhost:3389 a.pinggy.io
