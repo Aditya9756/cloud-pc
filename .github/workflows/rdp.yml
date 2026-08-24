@@ -10,11 +10,28 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Start Serveo Tunnel
-        shell: cmd
+      - name: Setup & Run Cloudflare TCP Tunnel
+        shell: powershell
         run: |
-          echo ==========================================
-          echo Username : runneradmin
-          echo Password : MyPassword@123
-          echo ==========================================
-          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -R 0:localhost:3389 serveo.net
+          Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
+          
+          # Start quick trycloudflare tunnel for RDP port 3389
+          $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+          $processInfo.FileName = ".\cloudflared.exe"
+          $processInfo.Arguments = "tunnel --url tcp://localhost:3389"
+          $processInfo.RedirectStandardError = $true
+          $processInfo.UseShellExecute = $false
+          $process = New-Object System.Diagnostics.Process
+          $process.StartInfo = $processInfo
+          $process.Start() | Out-Null
+
+          Start-Sleep -Seconds 12
+          
+          Write-Host ""
+          Write-Host "==========================================" -ForegroundColor Green
+          Write-Host "Username : runneradmin" -ForegroundColor Yellow
+          Write-Host "Password : MyPassword@123" -ForegroundColor Yellow
+          Write-Host "==========================================" -ForegroundColor Green
+          Write-Host ""
+      - name: Keep Alive (6 Hours)
+        run: Start-Sleep -Seconds 21600
