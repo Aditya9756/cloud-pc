@@ -9,7 +9,7 @@ jobs:
         run: |
           Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
           Expand-Archive ngrok.zip
-          .\ngrok\ngrok.exe config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+          .\ngrok\ngrok.exe config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
       - name: Enable RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
@@ -21,6 +21,10 @@ jobs:
           Start-Process powershell -ArgumentList ".\ngrok\ngrok.exe tcp 3389"
           Start-Sleep -Seconds 10
           $tunnels = (Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels).tunnels
+          Write-Output "================================"
           Write-Output "RDP Address: $($tunnels[0].public_url -replace 'tcp://', '')"
+          Write-Output "User: runneradmin"
+          Write-Output "Password: MyPassword@123"
+          Write-Output "================================"
       - name: Keep Alive (6 Hours)
         run: Start-Sleep -Seconds 21600
