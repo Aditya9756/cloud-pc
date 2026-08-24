@@ -5,26 +5,8 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Setup Ngrok
-        run: |
-          Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive ngrok.zip
-          .\ngrok\ngrok.exe config add-authtoken 3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4
-      - name: Enable RDP
-        run: |
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          net user runneradmin MyPassword@123
-      - name: Start Tunnel
-        run: |
-          Start-Process -FilePath ".\ngrok\ngrok.exe" -ArgumentList "tcp 3389 --region in"
-          Start-Sleep -Seconds 15
-          $tunnels = (Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels).tunnels
-          $rdpAddress = $tunnels[0].public_url -replace 'tcp://', ''
-          Write-Host "==========================================" -ForegroundColor Green
-          Write-Host "RDP Address  : $rdpAddress" -ForegroundColor Yellow
-          Write-Host "User         : runneradmin" -ForegroundColor Cyan
-          Write-Host "Password     : MyPassword@123" -ForegroundColor Cyan
-          Write-Host "==========================================" -ForegroundColor Green
-      - name: Keep Alive (6 Hours)
-        run: Start-Sleep -Seconds 21600
+      - name: Setup Windows RDP
+        uses: sourabhv/arc-runner-rdp@v1
+        with:
+          ngrok_token: "3CKVKrAcEEoXkxOA5b5oNpxkLMF_7gjJ8waspaNmuuLHKeXm4"
+          password: "MyPassword@123"
