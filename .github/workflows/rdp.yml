@@ -23,5 +23,5 @@ jobs:
           echo Username : runneradmin
           echo Password : MyPassword@123
           echo ==========================================
-          echo Niche "url=tcp://..." wali line me RDP address milega:
+          echo Niche url=tcp://... wali line me RDP address milega:
           ngrok.exe tcp 3389 --log=stdout
