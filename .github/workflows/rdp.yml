@@ -10,12 +10,11 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           net user runneradmin MyPassword@123
-      - name: Start Pinggy RDP Tunnel
+      - name: Start Serveo Tunnel
         shell: cmd
         run: |
           echo ==========================================
           echo Username : runneradmin
           echo Password : MyPassword@123
           echo ==========================================
-          echo Niche logs me "tcp://..." address check karein:
-          ssh -o StrictHostKeyChecking=no -p 443 -R0:localhost:3389 a.pinggy.io
+          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -R 0:localhost:3389 serveo.net
